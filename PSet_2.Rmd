@@ -1,0 +1,71 @@
+---
+title: 'Machine Learning: Problem Set 2'
+author: "Paulino Diaz"
+date: "January 31, 2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(wooldridge)
+library(boot)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Q1
+We cna choose the function
+
+```{r, q1}
+set.seed(1)
+x1 <- rnorm(1000, mean = 0, sd = 1)
+x2 <- rnorm(1000, mean = 0, sd = 1)
+
+data <- tibble(x1 = x1,
+               x2 = x2,
+               y = -abs(x1^2) + x2^2)
+
+summary(lm(y ~ x1 + x2, data))
+
+```
+
+## Q2
+```{r, q2, include=F}
+data(catholic); attach(catholic)
+female <- as.factor(female); gender = revalue(female, c("1" = "female", "0" = "male"))
+hsgrad <- as.factor(hsgrad); hs = revalue(hsgrad, c("1" = "highschool", "0" = "no_highschool"))
+
+catholic <- catholic %>%
+  filter(!is.na(hsgrad))
+
+```
+
+```{r, q2a}
+summary(lm(read12 ~ female, catholic))
+```
+
+The coefficient for female can be interpreted as the difference in average reading scores between males and females.
+
+```{r, q2b}
+summary(lm(read12 ~ female - 1, catholic))
+```
+
+The coefficient on female can be interpreted as the average reading score for females.
+
+```{r, q2c}
+summary(lm(read12 ~ female*hsgrad, catholic))
+```
+For this model: 
+* The intercept is the average reading score for males who have not finished highschool. 
+* The female coefficient is the difference in average reading scores between males and females who have not attended highschool. 
+* The hsgrad coefficient is the difference in average reading scores between males who have attended highschool and those who haven't
+* The interaction coefficient is the difference in average reading scores between males with a highschool diploma and females with a highschool diploma
+
+```{r, q2d}
+summary(lm(read12 ~ female*lfaminc, catholic))
+```
+In this model:
+* The intercept is the average reading score when the family income = 1 and the individual is male.
+*The female coefficient is the difference in average reading scores between males and females when family income = 1.
+*The coefficient of log(family income) multiplied by 1/100 is equal to the average precentage change in reading scores due to a 1 percent increase in family income when the individual is male.
+*The coefficient of the interaction multiplied by 1/100 is equal to the difference in percentage change in reading scores due to a 1 percent change in family income, between males and females.
+
