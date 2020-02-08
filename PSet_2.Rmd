@@ -12,7 +12,7 @@ library(boot)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Q1
+## Part 1
 We cna choose the function
 
 ```{r, q1}
@@ -28,14 +28,9 @@ summary(lm(y ~ x1 + x2, data))
 
 ```
 
-## Q2
+## Part 2
 ```{r, q2, include=F}
-data(catholic); attach(catholic)
-female <- as.factor(female); gender = revalue(female, c("1" = "female", "0" = "male"))
-hsgrad <- as.factor(hsgrad); hs = revalue(hsgrad, c("1" = "highschool", "0" = "no_highschool"))
-
-catholic <- catholic %>%
-  filter(!is.na(hsgrad))
+data(catholic)
 
 ```
 
@@ -43,7 +38,7 @@ catholic <- catholic %>%
 summary(lm(read12 ~ female, catholic))
 ```
 
-The coefficient for female can be interpreted as the difference in average reading scores between males and females.
+The coefficient for female can be interpreted as the difference in average reading scores between males and females. Meaning the average reading score for females is 51.71.
 
 ```{r, q2b}
 summary(lm(read12 ~ female - 1, catholic))
@@ -56,9 +51,9 @@ summary(lm(read12 ~ female*hsgrad, catholic))
 ```
 For this model: 
 * The intercept is the average reading score for males who have not finished highschool. 
-* The female coefficient is the difference in average reading scores between males and females who have not attended highschool. 
+* The female coefficient is the difference in average reading scores between males and females who have not attended highschool - but this result is not statistically significant. 
 * The hsgrad coefficient is the difference in average reading scores between males who have attended highschool and those who haven't
-* The interaction coefficient is the difference in average reading scores between males with a highschool diploma and females with a highschool diploma
+* The interaction coefficient is the difference in average reading scores between males with a highschool diploma and females with a highschool diploma - but this result is not statistically significant
 
 ```{r, q2d}
 summary(lm(read12 ~ female*lfaminc, catholic))
@@ -69,3 +64,53 @@ In this model:
 *The coefficient of log(family income) multiplied by 1/100 is equal to the average precentage change in reading scores due to a 1 percent increase in family income when the individual is male.
 *The coefficient of the interaction multiplied by 1/100 is equal to the difference in percentage change in reading scores due to a 1 percent change in family income, between males and females.
 
+### 2.e
+The formula 
+
+## Part 3
+
+### 2
+
+1.The probability that the $j^{th}$ observation is in the bootstrap sample is $1/n$, so the probability this observation is *not* the first observation in the sample is: $$1 - (1/n)$$
+
+2.We are sampling with replacement, meaning each resample is independent from the previous one. Thus the probability of not being part of the first, second,..., or $n$ bootstrap resample is the same for each observation: $$1 - (1/n)$$
+
+3.The probability that the $j^{th}$ observation is not in the bootstrap sample is equal to the product of the $n$ probabilities of not being part of an individual resample: $$(1 - (1/n))_1\times(1 - (1/n))_2\times...\times(1 - (1/n))_n$$ which can be simplified to: $$(1 - (1/n))^n$$
+
+4. When $n = 5$ then the probability of not being in the sample equals `r (1 - (1/5))^5`.
+
+5. When $n = 100$ then the probability of not being in the sample equals `r (1 - (1/100))^100`.
+
+6. When $n = 10,000$ then the probability of not being in the sample equals `r (1 - (1/10000))^10000`.
+
+7. The probability that the $j_{th}$ observation is not in the bootstrap sample is initially increasing as the number of observations increases, but eventually levels off at around 36 percent regardless of how large $n$ gets.
+```{r, q}
+boot_prob <- tibble(obs = c(1:100000),
+                    prob = (1 - (1/obs))^obs)
+boot_plot <- ggplot(boot_prob, aes(obs, prob)) +
+  geom_point() +
+  labs(x = "# of observations",
+       y = "Probability",
+       title = "Probability of being in bootstrap sample")+
+  theme_minimal()
+boot_plot
+```
+8. The below simulation highlights how the 4th observation in a sample with 100 observations is included in the bootstrap resample 62 percent of the time. This percentage approximates the number that we would expect, given the probability of not being included in a bootstrap sample of 100 observations is 36.6 percent (based on the calculation in part 5).
+```{r, q2h}
+set.seed(1)
+store=rep(NA, 10000)
+for(i in 1:10000) {
+store[i]=sum(sample (1:100, rep=TRUE)==4) >0
+}
+mean(store)
+```
+
+### 3
+
+(@) The *k-fold* CV approach involves randomly dividing the set of observations into *k* different groups of approximately equal size. Each group is a *fold*. The first fold is then treated as a test set, or validation set, and the remaining folds are used for training our model. The MSE is computed using the observations in the validation set - which is also commonly referred to as the held-out fold. This procedure is repeated *k* times, and each time, a different fold of observations is treated as the held-out fold. This process produces *k* estimates of of the MSE. The final *k-fold* estimate is computed by averaging these values.
+
+(@)Advantages and disadvantages:
+  i)A big advantage of *k-fold* CV over the hold-out method is that it allows you to train and test your model on multiple train-test splits, thus reducing the variance in your estimate of the MSE. The main disadvantage is that it is more computationally expensive and takes more time to run, which might be a concern if you have an extremely large dataset.
+  ii)There are two main advantages of *k-fold* CV over LOOCV: (1) K-fold is **less** computationally expensive, as it always requires fitting the statistical learning method $k < n$ times. With LOOCV you always have to fit the model $n$ times. (2) The *k-fold* estimates have less variance than the LOOCv estimates because the MSE outputs of the *k-fold* CV are not as correlated as the MSEs of LOOCV. LOOCV does have one advantage over the *k-fold* estimate, as it is less biased. This is due to the fact that each training set in the LOOCV contains almost all of the observations or to be precise $n - 1$ observations.
+
+### 8
